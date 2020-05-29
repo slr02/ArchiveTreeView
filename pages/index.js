@@ -2,6 +2,7 @@ import { useState } from "react";
 import fetch from "isomorphic-unfetch";
 import ArchiveTree from "../components/ArchiveTree";
 import styled from "styled-components";
+import Head from "next/head";
 
 const Container = styled.div`
   font-family: Arial, Helvetica, sans-serif;
@@ -68,7 +69,6 @@ export default function IndexPage() {
     if (query.length > 0) {
       const response = await fetch(worksUrl);
       const works = await response.json();
-      console.log(works);
       if (works.type && works.type === "ResultList") {
         setInvalid(false);
         setWorks(works);
@@ -101,46 +101,51 @@ export default function IndexPage() {
   }
 
   return (
-    <Container>
-      <h1>View an archive tree</h1>
-      <FormContainer>
-        {invalid && (
-          <p style={{ color: "red", fontWeight: "bold" }}>{errorMessage}</p>
+    <>
+      <Head>
+        <title>View an archive tree</title>
+      </Head>
+      <Container>
+        <h1>View an archive tree</h1>
+        <FormContainer>
+          {invalid && (
+            <p style={{ color: "red", fontWeight: "bold" }}>{errorMessage}</p>
+          )}
+          <form onSubmit={handleIdSubmit}>
+            <p style={{ whiteSpace: "nowrap" }}>
+              <label htmlFor="archiveId">Enter archvie id: </label>
+              <input id="archiveId" name="archiveId" type="text" />{" "}
+              <button>Get the archive</button>
+            </p>
+          </form>
+          OR
+          <form onSubmit={handleQuerySubmit}>
+            <p style={{ whiteSpace: "nowrap" }}>
+              <label htmlFor="query">Search for an archive: </label>
+              <input id="query" name="query" type="text" />{" "}
+              <button>Look for archives</button>
+            </p>
+          </form>
+        </FormContainer>
+        {works && (
+          <>
+            <h2>{works.totalResults} Results</h2>
+            <ul>
+              {works.results.map(work => (
+                <ArchiveItem key={work.id} work={work} getWork={getWork} />
+              ))}
+            </ul>
+          </>
         )}
-        <form onSubmit={handleIdSubmit}>
-          <p style={{ whiteSpace: "nowrap" }}>
-            <label htmlFor="archiveId">Enter archvie id: </label>
-            <input id="archiveId" name="archiveId" type="text" />{" "}
-            <button>Get the archive</button>
-          </p>
-        </form>
-        OR
-        <form onSubmit={handleQuerySubmit}>
-          <p style={{ whiteSpace: "nowrap" }}>
-            <label htmlFor="query">Search for an archive: </label>
-            <input id="query" name="query" type="text" />{" "}
-            <button>Look for archives</button>
-          </p>
-        </form>
-      </FormContainer>
-      {works && (
-        <>
-          <h2>{works.totalResults} Results</h2>
-          <ul>
-            {works.results.map(work => (
-              <ArchiveItem key={work.id} work={work} getWork={getWork} />
-            ))}
-          </ul>
-        </>
-      )}
-      {work && (
-        <>
-          <h2>Archive Tree</h2>
-          <ArchiveTree work={work} />
-        </>
-      )}
-    </Container>
+        {work && (
+          <>
+            <h2>Archive Tree</h2>
+            <ArchiveTree work={work} />
+          </>
+        )}
+      </Container>
+    </>
   );
 }
 
-//   //cbjzx6u8 //hz43r7re
+//cbjzx6u8 //hz43r7re
