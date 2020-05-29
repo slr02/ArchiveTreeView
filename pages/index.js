@@ -103,7 +103,7 @@ export default function IndexPage() {
   return (
     <>
       <Head>
-        <title>View an archive tree</title>
+        <title>View an archive tree from Wellcome Collection</title>
       </Head>
       <Container>
         <h1>View an archive tree</h1>
