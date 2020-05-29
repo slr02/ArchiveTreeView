@@ -106,7 +106,7 @@ export default function IndexPage() {
         <title>View an archive tree from Wellcome Collection</title>
       </Head>
       <Container>
-        <h1>View an archive tree</h1>
+        <h1>View an archive tree from Wellcome Collection</h1>
         <FormContainer>
           {invalid && (
             <p style={{ color: "red", fontWeight: "bold" }}>{errorMessage}</p>
