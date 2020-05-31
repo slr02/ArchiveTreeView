@@ -104,6 +104,7 @@ export default function IndexPage() {
     <>
       <Head>
         <title>View an archive tree from Wellcome Collection</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
       <Container>
         <h1>View an archive tree from Wellcome Collection</h1>

@@ -140,38 +140,41 @@ const WorkLink = ({
     ref: ref,
     threshold: [0]
   });
+
+  const fetchAndUpdateCollection = async id => {
+    // find the current branch
+    const currentBranch = getTreeBranches(currentWorkPath, collection)[0];
+    // check for children
+    if (!currentBranch.children) {
+      // if no children then get collection tree for work
+      const currentWork = await getWork(id);
+      const newCollection = currentWork.work.collection;
+      const currentBranchWithChildren = getTreeBranches(
+        currentWorkPath,
+        newCollection
+      )[0];
+      const updatedCollection = updateCollection(
+        collection,
+        currentWorkPath,
+        currentBranchWithChildren
+      );
+      setCollection(updatedCollection);
+    }
+  };
   useEffect(() => {
     if (isOnScreen) {
-      ref.current.click();
+      fetchAndUpdateCollection(id);
     }
   }, [isOnScreen]);
 
   return (
-    <span
+    <a
       ref={ref}
-      onClick={async () => {
-        // find the current branch
-        const currentBranch = getTreeBranches(currentWorkPath, collection)[0];
-        // check for children
-        if (!currentBranch.children) {
-          // if no children then get collection tree for work
-          const currentWork = await getWork(id);
-          const newCollection = currentWork.work.collection;
-          const currentBranchWithChildren = getTreeBranches(
-            currentWorkPath,
-            newCollection
-          )[0];
-          const updatedCollection = updateCollection(
-            collection,
-            currentWorkPath,
-            currentBranchWithChildren
-          );
-          setCollection(updatedCollection);
-        }
-      }}
+      target="_blank"
+      href={`https://wellcomecollection.org/works/${id}`}
     >
       {`${title} (${currentWorkPath})`}
-    </span>
+    </a>
   );
 };
 
@@ -223,9 +226,8 @@ const ArchiveTree = ({ work }) => {
   );
 };
 export default ArchiveTree;
-// TODO download codesandbox
-
 // Needs API working
+// Click tree node to show preview, link from preview to view work on wellcomecollection.org
 // TODO prevent scroll when loading?
 // TODO icon when loading
 // TODO use react window
