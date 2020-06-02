@@ -169,8 +169,10 @@ const WorkLink = ({
 
   return (
     <a
+      style={{ whiteSpace: "nowrap", padding: "10px", display: "inline-block" }}
       ref={ref}
       target="_blank"
+      rel="noopener noreferrer"
       href={`https://wellcomecollection.org/works/${id}`}
     >
       {`${title} (${currentWorkPath})`}
