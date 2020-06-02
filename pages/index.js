@@ -104,6 +104,7 @@ export default function IndexPage() {
     <>
       <Head>
         <title>View an archive tree from Wellcome Collection</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
       <Container>
         <h1>View an archive tree from Wellcome Collection</h1>
@@ -112,18 +113,22 @@ export default function IndexPage() {
             <p style={{ color: "red", fontWeight: "bold" }}>{errorMessage}</p>
           )}
           <form onSubmit={handleIdSubmit}>
-            <p style={{ whiteSpace: "nowrap" }}>
+            <p>
               <label htmlFor="archiveId">Enter archvie id: </label>
-              <input id="archiveId" name="archiveId" type="text" />{" "}
-              <button>Get the archive</button>
+              <span style={{ whiteSpace: "nowrap" }}>
+                <input id="archiveId" name="archiveId" type="text" />{" "}
+                <button>Go</button>
+              </span>
             </p>
           </form>
           OR
           <form onSubmit={handleQuerySubmit}>
-            <p style={{ whiteSpace: "nowrap" }}>
+            <p>
               <label htmlFor="query">Search for an archive: </label>
-              <input id="query" name="query" type="text" />{" "}
-              <button>Look for archives</button>
+              <span style={{ whiteSpace: "nowrap" }}>
+                <input id="query" name="query" type="text" />
+                <button>Go</button>
+              </span>
             </p>
           </form>
         </FormContainer>
