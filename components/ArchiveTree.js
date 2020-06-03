@@ -8,7 +8,8 @@ const Preview = styled.div`
   font-size: 14px;
   position: fixed;
   z-index: 2;
-  bottom: 20px;
+  top: 50%;
+  transform: translateY(-50%);
   right: 20px;
   box-sizing: border-box;
   width: 50vw;
