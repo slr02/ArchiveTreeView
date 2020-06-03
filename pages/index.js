@@ -110,7 +110,7 @@ export default function IndexPage() {
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
       <Container>
-        <h1>explore an archive from Wellcome Collection</h1>
+        <h1>Explore an archive from Wellcome Collection</h1>
         <FormContainer>
           {invalid && (
             <p style={{ color: "red", fontWeight: "bold" }}>{errorMessage}</p>
