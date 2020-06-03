@@ -31,7 +31,7 @@ const ArchiveItem = ({ work, getWork }) => {
   );
 };
 
-export const apiUrl = 'https://api-stage.wellcomecollection.org/catalogue/v2/works';
+export const apiUrl = 'https://api.wellcomecollection.org/catalogue/v2/works';
 
 export default function IndexPage() {
   const [work, setWork] = useState(null);
