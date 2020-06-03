@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import fetch from "isomorphic-unfetch";
 import styled from "styled-components";
 import useOnScreen from "../hooks/useOnScreen";
+import {apiUrl} from "../pages/index";
 
 const Tree = styled.div`
   ul {
@@ -62,12 +63,10 @@ const Tree = styled.div`
 `;
 
 async function getWork(id) {
-  const url = `https://api.wellcomecollection.org/catalogue/v2/works/${id}?include=collection`;
+  const url = `${apiUrl}/${id}?include=collection`;
   const response = await fetch(url);
   const work = await response.json();
-  return {
-    work
-  };
+  return work
 }
 
 function getTreeBranches(path, collection) {
@@ -142,13 +141,14 @@ const WorkLink = ({
   });
 
   const fetchAndUpdateCollection = async id => {
+    if (level === 'Item') return;
     // find the current branch
     const currentBranch = getTreeBranches(currentWorkPath, collection)[0];
     // check for children
     if (!currentBranch.children) {
       // if no children then get collection tree for work
       const currentWork = await getWork(id);
-      const newCollection = currentWork.work.collection;
+      const newCollection = currentWork.collection;
       const currentBranchWithChildren = getTreeBranches(
         currentWorkPath,
         newCollection
@@ -175,7 +175,7 @@ const WorkLink = ({
       rel="noopener noreferrer"
       href={`https://wellcomecollection.org/works/${id}`}
     >
-      {`${title} (${currentWorkPath})`}
+      {title}<br />{currentWorkPath}
     </a>
   );
 };
@@ -228,7 +228,6 @@ const ArchiveTree = ({ work }) => {
   );
 };
 export default ArchiveTree;
-// Needs API working
 // Click tree node to show preview, link from preview to view work on wellcomecollection.org
 // TODO prevent scroll when loading?
 // TODO icon when loading
