@@ -30,6 +30,9 @@ const ArchiveItem = ({ work, getWork }) => {
     </li>
   );
 };
+
+export const apiUrl = 'https://api-stage.wellcomecollection.org/catalogue/v2/works';
+
 export default function IndexPage() {
   const [work, setWork] = useState(null);
   const [works, setWorks] = useState(null);
@@ -40,7 +43,7 @@ export default function IndexPage() {
     event.preventDefault();
     const data = new FormData(event.target);
     const archiveId = data.get("archiveId");
-    const workUrl = `https://api.wellcomecollection.org/catalogue/v2/works/${archiveId}?include=collection`;
+    const workUrl = `${apiUrl}/${archiveId}?include=collection`;
     if (archiveId.length > 0) {
       const response = await fetch(workUrl);
       const work = await response.json();
@@ -65,7 +68,7 @@ export default function IndexPage() {
     event.preventDefault();
     const data = new FormData(event.target);
     const query = data.get("query");
-    const worksUrl = `https://api.wellcomecollection.org/catalogue/v2/works?collection.depth=1&query=${query}`;
+    const worksUrl = `${apiUrl}/?collection.depth=1&query=${query}`;
     if (query.length > 0) {
       const response = await fetch(worksUrl);
       const works = await response.json();
@@ -84,7 +87,7 @@ export default function IndexPage() {
   }
 
   async function getWork(id) {
-    const workUrl = `https://api.wellcomecollection.org/catalogue/v2/works/${id}?include=collection`;
+    const workUrl = `${apiUrl}/${id}?include=collection`;
     const response = await fetch(workUrl);
     const work = await response.json();
     if (work.errorType) {
