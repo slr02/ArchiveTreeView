@@ -31,7 +31,7 @@ const ArchiveItem = ({ work, getWork }) => {
   );
 };
 
-export const apiUrl = 'https://api.wellcomecollection.org/catalogue/v2/works';
+export const apiUrl = "https://api.wellcomecollection.org/catalogue/v2/works";
 
 export default function IndexPage() {
   const [work, setWork] = useState(null);
@@ -129,7 +129,7 @@ export default function IndexPage() {
             <p>
               <label htmlFor="query">Search for an archive: </label>
               <span style={{ whiteSpace: "nowrap" }}>
-                <input id="query" name="query" type="text" />
+                <input id="query" name="query" type="text" />{" "}
                 <button>Go</button>
               </span>
             </p>
