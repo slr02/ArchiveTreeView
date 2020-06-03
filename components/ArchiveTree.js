@@ -23,6 +23,10 @@ const Preview = styled.div`
     margin-top: 0;
   }
 
+  a {
+    color: black;
+  }
+
   button {
     position: absolute;
     top: 12px;
@@ -111,7 +115,6 @@ async function getWork(id, withIncludes = false) {
   const workUrl = `${apiUrl}/${id}?include=collection${
     withIncludes ? `,${includes.join(",")}` : ""
   }`;
-  console.log(workUrl);
   const response = await fetch(workUrl);
   const work = await response.json();
   return work;
@@ -225,7 +228,13 @@ const WorkLink = ({
 
   return (
     <a
-      style={{ whiteSpace: "nowrap", padding: "10px", display: "inline-block" }}
+      style={{
+        whiteSpace: "nowrap",
+        padding: "10px",
+        display: "inline-block",
+        color: "black",
+        textDecoration: "none"
+      }}
       ref={ref}
       target="_blank"
       rel="noopener noreferrer"
@@ -234,7 +243,16 @@ const WorkLink = ({
     >
       {title}
       <br />
-      {currentWorkPath}
+      <span
+        style={{
+          fontSize: "13px",
+          color: "#707070",
+          textDecoration: "none",
+          padding: "0"
+        }}
+      >
+        {currentWorkPath}
+      </span>
     </a>
   );
 };
