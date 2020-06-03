@@ -9,10 +9,16 @@ const Container = styled.div`
 `;
 
 const FormContainer = styled.div`
+  display: inline-block;
   border: 2px solid black;
   border-radius: 6px;
-  background: #abebc6;
+  background: lightgrey;
   padding: 10px;
+
+  label {
+    display: inline-block;
+    width: 180px;
+  }
 `;
 
 const ArchiveItem = ({ work, getWork }) => {
