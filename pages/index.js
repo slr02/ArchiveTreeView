@@ -106,11 +106,11 @@ export default function IndexPage() {
   return (
     <>
       <Head>
-        <title>View an archive tree from Wellcome Collection</title>
+        <title>Explore an archive from Wellcome Collection</title>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
       <Container>
-        <h1>View an archive tree from Wellcome Collection</h1>
+        <h1>explore an archive from Wellcome Collection</h1>
         <FormContainer>
           {invalid && (
             <p style={{ color: "red", fontWeight: "bold" }}>{errorMessage}</p>
