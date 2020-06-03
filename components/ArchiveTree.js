@@ -2,8 +2,43 @@ import { useState, useRef, useEffect } from "react";
 import fetch from "isomorphic-unfetch";
 import styled from "styled-components";
 import useOnScreen from "../hooks/useOnScreen";
-import {apiUrl} from "../pages/index";
+import { apiUrl } from "../pages/index";
 
+const Preview = styled.div`
+  font-size: 14px;
+  position: fixed;
+  z-index: 2;
+  top: 20px;
+  right: 20px;
+  box-sizing: border-box;
+  width: 50vw;
+  max-height: calc(100vh - 48px);
+  overflow: auto;
+  border: 2px solid black;
+  border-radius: 6px;
+  background: #f0ede3;
+  padding: 12px;
+
+  p {
+    margin-top: 0;
+  }
+
+  button {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+  }
+`;
+
+const PreviewTable = styled.table`
+  margin-top: 30px;
+  th,
+  td {
+    padding: 6px;
+    vertical-align: top;
+    text-align: left;
+  }
+`;
 const Tree = styled.div`
   ul {
     list-style: none;
@@ -62,11 +97,24 @@ const Tree = styled.div`
   }
 `;
 
-async function getWork(id) {
-  const url = `${apiUrl}/${id}?include=collection`;
-  const response = await fetch(url);
+const includes = [
+  "identifiers",
+  "items",
+  "subjects",
+  "genres",
+  "contributors",
+  "production",
+  "notes"
+];
+
+async function getWork(id, withIncludes = false) {
+  const workUrl = `${apiUrl}/${id}?include=collection${
+    withIncludes ? `,${includes.join(",")}` : ""
+  }`;
+  console.log(workUrl);
+  const response = await fetch(workUrl);
   const work = await response.json();
-  return work
+  return work;
 }
 
 function getTreeBranches(path, collection) {
@@ -132,7 +180,9 @@ const WorkLink = ({
   level,
   currentWorkPath,
   collection,
-  setCollection
+  setCollection,
+  setWorkToPreview,
+  setShowPreview
 }) => {
   const ref = useRef();
   const isOnScreen = useOnScreen({
@@ -140,8 +190,14 @@ const WorkLink = ({
     threshold: [0]
   });
 
+  async function showPreview(e) {
+    e.preventDefault();
+    const work = await getWork(id, true);
+    setWorkToPreview(work);
+    setShowPreview(true);
+  }
   const fetchAndUpdateCollection = async id => {
-    if (level === 'Item') return;
+    if (level === "Item") return;
     // find the current branch
     const currentBranch = getTreeBranches(currentWorkPath, collection)[0];
     // check for children
@@ -174,13 +230,23 @@ const WorkLink = ({
       target="_blank"
       rel="noopener noreferrer"
       href={`https://wellcomecollection.org/works/${id}`}
+      onClick={showPreview}
     >
-      {title}<br />{currentWorkPath}
+      {title}
+      <br />
+      {currentWorkPath}
     </a>
   );
 };
 
-const NestedList = ({ children, currentWorkId, collection, setCollection }) => {
+const NestedList = ({
+  children,
+  currentWorkId,
+  collection,
+  setCollection,
+  setWorkToPreview,
+  setShowPreview
+}) => {
   return (
     <ul>
       {children.map(item => {
@@ -193,6 +259,8 @@ const NestedList = ({ children, currentWorkId, collection, setCollection }) => {
               level={item.path.level}
               collection={collection}
               setCollection={setCollection}
+              setWorkToPreview={setWorkToPreview}
+              setShowPreview={setShowPreview}
             />
             {item.children && (
               <NestedList
@@ -201,6 +269,8 @@ const NestedList = ({ children, currentWorkId, collection, setCollection }) => {
                 currentWorkId={currentWorkId}
                 collection={collection}
                 setCollection={setCollection}
+                setWorkToPreview={setWorkToPreview}
+                setShowPreview={setShowPreview}
               />
             )}
           </li>
@@ -212,25 +282,100 @@ const NestedList = ({ children, currentWorkId, collection, setCollection }) => {
 
 const ArchiveTree = ({ work }) => {
   const [collectionTree, setCollectionTree] = useState(work.collection || {});
+  const [workToPreview, setWorkToPreview] = useState();
+  const [showPreview, setShowPreview] = useState();
   useEffect(() => {
     setCollectionTree(work.collection);
   }, [work]);
   return (
-    <Tree>
-      <NestedList
-        currentWorkPath={work.collectionPath.path}
-        currentWorkId={work.id}
-        children={[collectionTree]}
-        collection={collectionTree}
-        setCollection={setCollectionTree}
-      />
-    </Tree>
+    <>
+      {showPreview && workToPreview && (
+        <Preview>
+          <button onClick={() => setShowPreview(false)}>Close Preview</button>
+          <PreviewTable>
+            {workToPreview.title && (
+              <tr>
+                <th>Title:</th>
+                <td>
+                  <a
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    href={`https://wellcomecollection.org/works/${work.id}`}
+                  >
+                    {workToPreview.title}
+                  </a>
+                </td>
+              </tr>
+            )}
+            {workToPreview.collectionPath && (
+              <tr>
+                <th>Reference:</th>
+                <td>{workToPreview.collectionPath.path}</td>
+              </tr>
+            )}
+            {workToPreview.description && (
+              <tr>
+                <th>Description:</th>
+                <td>
+                  <div
+                    dangerouslySetInnerHTML={{
+                      __html: workToPreview.description
+                    }}
+                  />
+                </td>
+              </tr>
+            )}
+            {workToPreview.production && workToPreview.production.length > 0 && (
+              <tr>
+                <th>Publication/Creation</th>
+                <td>
+                  {workToPreview.production.map(
+                    productionEvent => productionEvent.label
+                  )}
+                </td>
+              </tr>
+            )}
+            {workToPreview.physicalDescription && (
+              <tr>
+                <th>Physical description:</th>
+                <td>{workToPreview.physicalDescription}</td>
+              </tr>
+            )}
+            {workToPreview.notes &&
+              workToPreview.notes
+                .filter(note => note.noteType.label === "Copyright note")
+                .map(note => (
+                  <tr key={note.noteType.label}>
+                    <th>{note.noteType.label}</th>
+                    <td>{note.contents}</td>
+                  </tr>
+                ))}
+          </PreviewTable>
+        </Preview>
+      )}
+      <Tree>
+        <NestedList
+          currentWorkPath={work.collectionPath.path}
+          currentWorkId={work.id}
+          children={[collectionTree]}
+          collection={collectionTree}
+          setCollection={setCollectionTree}
+          setWorkToPreview={setWorkToPreview}
+          setShowPreview={setShowPreview}
+        />
+      </Tree>
+    </>
   );
 };
 export default ArchiveTree;
-// Click tree node to show preview, link from preview to view work on wellcomecollection.org
+// TODO highlight tree node for work id used to generate it
+// TODO useContext rather than passing props down (showPreviewEtc)
+// TODO split this file up
+// TODO use same getWork function everywhere
+// TODO use react window
 // TODO prevent scroll when loading?
 // TODO icon when loading
-// TODO use react window
-// TODO split this file up
-// Change Tree / grow Tree option
+// TODO use INDEXDB to store works, so don't have to get them if already have
+// TODO Change Tree / grow Tree option
+// TODO show/hide branch controls
+// TODO Get examples of digitised archives
