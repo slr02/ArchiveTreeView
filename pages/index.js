@@ -123,7 +123,7 @@ export default function IndexPage() {
           )}
           <form onSubmit={handleIdSubmit}>
             <p>
-              <label htmlFor="archiveId">Enter archvie id: </label>
+              <label htmlFor="archiveId">Enter archive id: </label>
               <span style={{ whiteSpace: "nowrap" }}>
                 <input id="archiveId" name="archiveId" type="text" />{" "}
                 <button>Go</button>
