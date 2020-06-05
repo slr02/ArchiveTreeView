@@ -4,6 +4,29 @@ import styled from "styled-components";
 import useOnScreen from "../hooks/useOnScreen";
 import { apiUrl } from "../pages/index";
 
+const ItemLink = styled.a`
+  margin-top: 5px;
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 10px;
+  font-size: 12px;
+  color: #fff;
+  background: #007868;
+  border-radius: 6px;
+  text-decoration: none;
+  transition: background 300ms ease;
+
+  &:hover,
+  &:focus {
+    text-decoration: none;
+    background: #333;
+  }
+
+  .icon__shape {
+    fill: currentColor;
+  }
+`;
+
 const Preview = styled.div`
   font-size: 14px;
   position: fixed;
@@ -26,6 +49,10 @@ const Preview = styled.div`
 
   a {
     color: black;
+    :hover,
+    :focus {
+      text-decoration: underline;
+    }
   }
 
   button {
@@ -44,6 +71,7 @@ const PreviewTable = styled.table`
     text-align: left;
   }
 `;
+
 const Tree = styled.div`
   ul {
     list-style: none;
@@ -57,15 +85,13 @@ const Tree = styled.div`
     font-weight: bold;
   }
 
-  span {
+  a {
     text-decoration: none;
-    display: inline-block;
-    padding: 10px;
-    white-space: nowrap;
-    :hover,
-    :focus {
-      text-decoration: underline;
-    }
+  }
+
+  a:focus,
+  a:hover {
+    text-decoration: underline;
   }
 
   ul ul {
@@ -104,7 +130,6 @@ const Tree = styled.div`
 
 const includes = [
   "identifiers",
-  "items",
   "subjects",
   "genres",
   "contributors",
@@ -113,7 +138,7 @@ const includes = [
 ];
 
 async function getWork(id, withIncludes = false) {
-  const workUrl = `${apiUrl}/${id}?include=collection${
+  const workUrl = `${apiUrl}/${id}?include=collection,items${
     withIncludes ? `,${includes.join(",")}` : ""
   }`;
   const response = await fetch(workUrl);
@@ -159,7 +184,8 @@ function getTreeBranches(path, collection) {
 function updateCollection(
   collection,
   currentWorkPath,
-  currentBranchWithChildren
+  currentBranchWithChildren,
+  itemUrl
 ) {
   const collectionCopy = Object.assign({}, collection);
   for (const property in collectionCopy) {
@@ -168,8 +194,14 @@ function updateCollection(
         if (currentWorkPath.includes(child.path.path)) {
           if (child.path.path === currentWorkPath) {
             child.children = currentBranchWithChildren.children;
+            child.itemUrl = itemUrl;
           } else {
-            updateCollection(child, currentWorkPath, currentBranchWithChildren);
+            updateCollection(
+              child,
+              currentWorkPath,
+              currentBranchWithChildren,
+              itemUrl
+            );
           }
         }
       }
@@ -197,11 +229,26 @@ const WorkLink = ({
   async function showPreview(e) {
     e.preventDefault();
     const work = await getWork(id, true);
+    console.log(work.items);
     setWorkToPreview(work);
     setShowPreview(true);
   }
+
+  function getDigitalLocationOfType(work, locationType) {
+    const [item] =
+      work.items &&
+      work.items
+        .map(item =>
+          item.locations.find(
+            location => location.locationType.id === locationType
+          )
+        )
+        .filter(Boolean);
+    return item;
+  }
+
   const fetchAndUpdateCollection = async id => {
-    if (level === "Item") return;
+    // if (level === "Item") return; // TODO just for testing online idea
     // find the current branch
     const currentBranch = getTreeBranches(currentWorkPath, collection)[0];
     // check for children
@@ -213,10 +260,21 @@ const WorkLink = ({
         currentWorkPath,
         newCollection
       )[0];
+      const digitalLocation = getDigitalLocationOfType(
+        currentWork,
+        "iiif-presentation"
+      );
+      const sierraId =
+        digitalLocation &&
+        (digitalLocation.url.match(/iiif\/(.*)\/manifest/) || [])[1];
+      const itemUrl = `https://wellcomecollection.org/works/${
+        currentWork.id
+      }/items?canvas=1&sierraId=${sierraId}`;
       const updatedCollection = updateCollection(
         collection,
         currentWorkPath,
-        currentBranchWithChildren
+        currentBranchWithChildren,
+        sierraId && itemUrl
       );
       setCollection(updatedCollection);
     }
@@ -231,10 +289,8 @@ const WorkLink = ({
     <a
       style={{
         whiteSpace: "nowrap",
-        padding: "10px",
         display: "inline-block",
-        color: "black",
-        textDecoration: "none"
+        color: "black"
       }}
       ref={ref}
       target="_blank"
@@ -242,7 +298,25 @@ const WorkLink = ({
       href={`https://wellcomecollection.org/works/${id}`}
       onClick={showPreview}
     >
-      {title}
+      <span style={{ display: "inline-flex", alignItems: "center" }}>
+        <span>{title}</span>
+        <span
+          style={{
+            display: "inline-block",
+            width: "1em",
+            padding: "0",
+            marginLeft: "2px"
+          }}
+        >
+          <svg viewBox="0 0 24 24">
+            <path
+              class="icon__shape"
+              fill-rule="nonzero"
+              d="M18.791 11.506l-5.224-5.294a.667.667 0 0 0-.975 0 .689.689 0 0 0 0 .988l4.04 4.094H5.697c-.418 0-.697.282-.697.706s.279.706.697.706h10.935l-4.04 4.094a.689.689 0 0 0 0 .988c.14.141.348.212.488.212.139 0 .348-.07.487-.212l5.224-5.294a.689.689 0 0 0 0-.988z"
+            />
+          </svg>
+        </span>
+      </span>
       <br />
       <span
         style={{
@@ -271,27 +345,60 @@ const NestedList = ({
       {children.map(item => {
         return (
           <li key={item.work.id}>
-            <WorkLink
-              title={item.work.title}
-              id={item.work.id}
-              currentWorkPath={item.path.path}
-              level={item.path.level}
-              collection={collection}
-              setCollection={setCollection}
-              setWorkToPreview={setWorkToPreview}
-              setShowPreview={setShowPreview}
-            />
-            {item.children && (
-              <NestedList
+            <div style={{ padding: "10px 10px 30px" }}>
+              <WorkLink
+                title={item.work.title}
+                id={item.work.id}
                 currentWorkPath={item.path.path}
-                children={item.children}
-                currentWorkId={currentWorkId}
+                level={item.path.level}
                 collection={collection}
                 setCollection={setCollection}
                 setWorkToPreview={setWorkToPreview}
                 setShowPreview={setShowPreview}
               />
-            )}
+              {item.itemUrl && (
+                <>
+                  <br />
+                  <ItemLink
+                    href={item.itemUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <span
+                      style={{
+                        display: "inline-block",
+                        width: "1.5em",
+                        padding: "0",
+                        marginRight: "5px"
+                      }}
+                    >
+                      <svg viewBox="0 0 24 24">
+                        <g
+                          class="icon__shape"
+                          fill-rule="nonzero"
+                          transform="translate(2 4)"
+                        >
+                          <path d="M10 0C4.17 0 0 6 0 8s4 8 10 8 10-6 10-8-4.2-8-10-8zm0 14c-4.76 0-8-5-8-6s3.21-6 8-6 8 5.11 8 6c0 .89-3.24 6-8 6z" />
+                          <circle cx="9.97" cy="8" r="3" />
+                        </g>
+                      </svg>
+                    </span>
+                    View online
+                  </ItemLink>
+                </>
+              )}
+              {item.children && (
+                <NestedList
+                  currentWorkPath={item.path.path}
+                  children={item.children}
+                  currentWorkId={currentWorkId}
+                  collection={collection}
+                  setCollection={setCollection}
+                  setWorkToPreview={setWorkToPreview}
+                  setShowPreview={setShowPreview}
+                />
+              )}
+            </div>
           </li>
         );
       })}
@@ -312,63 +419,65 @@ const ArchiveTree = ({ work }) => {
         <Preview>
           <button onClick={() => setShowPreview(false)}>Close Preview</button>
           <PreviewTable>
-            {workToPreview.title && (
-              <tr>
-                <th>Title:</th>
-                <td>
-                  <a
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    href={`https://wellcomecollection.org/works/${work.id}`}
-                  >
-                    {workToPreview.title}
-                  </a>
-                </td>
-              </tr>
-            )}
-            {workToPreview.collectionPath && (
-              <tr>
-                <th>Reference:</th>
-                <td>{workToPreview.collectionPath.path}</td>
-              </tr>
-            )}
-            {workToPreview.description && (
-              <tr>
-                <th>Description:</th>
-                <td>
-                  <div
-                    dangerouslySetInnerHTML={{
-                      __html: workToPreview.description
-                    }}
-                  />
-                </td>
-              </tr>
-            )}
-            {workToPreview.production && workToPreview.production.length > 0 && (
-              <tr>
-                <th>Publication/Creation</th>
-                <td>
-                  {workToPreview.production.map(
-                    productionEvent => productionEvent.label
-                  )}
-                </td>
-              </tr>
-            )}
-            {workToPreview.physicalDescription && (
-              <tr>
-                <th>Physical description:</th>
-                <td>{workToPreview.physicalDescription}</td>
-              </tr>
-            )}
-            {workToPreview.notes &&
-              workToPreview.notes
-                .filter(note => note.noteType.label === "Copyright note")
-                .map(note => (
-                  <tr key={note.noteType.label}>
-                    <th>{note.noteType.label}</th>
-                    <td>{note.contents}</td>
-                  </tr>
-                ))}
+            <tbody>
+              {workToPreview.title && (
+                <tr>
+                  <th>Title:</th>
+                  <td>
+                    <a
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      href={`https://wellcomecollection.org/works/${work.id}`}
+                    >
+                      {workToPreview.title}
+                    </a>
+                  </td>
+                </tr>
+              )}
+              {workToPreview.collectionPath && (
+                <tr>
+                  <th>Reference:</th>
+                  <td>{workToPreview.collectionPath.path}</td>
+                </tr>
+              )}
+              {workToPreview.description && (
+                <tr>
+                  <th>Description:</th>
+                  <td>
+                    <div
+                      dangerouslySetInnerHTML={{
+                        __html: workToPreview.description
+                      }}
+                    />
+                  </td>
+                </tr>
+              )}
+              {workToPreview.production && workToPreview.production.length > 0 && (
+                <tr>
+                  <th>Publication/Creation</th>
+                  <td>
+                    {workToPreview.production.map(
+                      productionEvent => productionEvent.label
+                    )}
+                  </td>
+                </tr>
+              )}
+              {workToPreview.physicalDescription && (
+                <tr>
+                  <th>Physical description:</th>
+                  <td>{workToPreview.physicalDescription}</td>
+                </tr>
+              )}
+              {workToPreview.notes &&
+                workToPreview.notes
+                  .filter(note => note.noteType.label === "Copyright note")
+                  .map(note => (
+                    <tr key={note.noteType.label}>
+                      <th>{note.noteType.label}</th>
+                      <td>{note.contents}</td>
+                    </tr>
+                  ))}
+            </tbody>
           </PreviewTable>
         </Preview>
       )}
